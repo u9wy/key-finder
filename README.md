@@ -15,12 +15,13 @@ The programme can generate private keys from page 1 to page 11579208923731619542
 - **Graceful Shutdown:** Implements a shutdown hook for graceful program termination, ensuring proper cleanup.
 
 ## Prerequisites
-- **Java:** Ensure that you have Java installed on your system to run this program.
+**Java:** Ensure that you have Java installed on your system to run this program.
 
 ## Usage
-1. **Compile:** Compile the Java program using your preferred Java compiler.
-   ```bash
-   javac Main.kt
+**Compile:** Compile the Java program using your preferred Java compiler.
+```bash
+javac Main.kt
+```
 
 ## Run
 
