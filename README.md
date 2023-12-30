@@ -68,11 +68,3 @@ Thread Safety: The program is designed to handle multi-threading, ensuring prope
 
 License
 This program is open-source and distributed under the MIT License. Feel free to modify and distribute as needed.
-
-```bash
-java -jar address-key-finder.jar btc 50 false false true 368934881474191032 737869762948382064
-```
-
-```bash
-java -jar address-key-finder.jar btc 50 false false true 425352958651173079329218259289710264 1157920892373161954235709850086879078528375642790749043826051631415181614944
-```
