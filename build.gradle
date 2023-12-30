@@ -1,0 +1,42 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.9.21'
+}
+
+group = 'key-finder'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.jetbrains.kotlin:kotlin-test'
+//    implementation 'org.web3j:core:4.10.0'
+    implementation 'org.web3j:core:5.0.0'
+    implementation 'org.web3j:utils:5.0.0'
+    implementation 'org.web3j:abi:5.0.0'
+    implementation("org.web3j:crypto:5.0.0")
+    implementation 'org.web3j:abi:5.0.0'
+//    implementation("org.web3j:wallet:5.0.0")
+    implementation ('org.bitcoinj:bitcoinj-core:0.16.2')
+    implementation 'org.slf4j:slf4j-api:2.0.9'
+    implementation 'org.slf4j:slf4j-simple:2.0.9'
+}
+
+jar {
+    duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
+    exclude('META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA')
+    manifest {
+        attributes(
+                'Main-Class': 'MainKt'
+        )
+    }
+    from { configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+}
+
+test {
+    useJUnitPlatform()
+}
+kotlin {
+    jvmToolchain(17)
+}
