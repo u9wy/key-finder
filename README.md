@@ -4,7 +4,7 @@ This program is designed to scan and cross-check wallet addresses against a pred
 
 The program generates private keys using a "pages" concept. Each page contains 100 keys. To find out what page a specific key is on you can do the following page = (key \ 100). 
 The result of this calculation will give you a starting or ending range. You can repeat the calculation to find the other end of the range you wish to scan. 
-The programme can generate private keys from page 1 to page 1157920892373161954235709850086879078528375642790749043826051631415181614944.
+The program can generate private keys from page 1 to page 1157920892373161954235709850086879078528375642790749043826051631415181614944.
 
 ## Features
 - **Multi-threaded Scanning:** Utilizes multiple threads to scan wallet addresses concurrently for improved efficiency.
