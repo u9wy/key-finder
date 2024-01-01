@@ -1,9 +1,7 @@
-
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
 
 object Database {
 
@@ -37,7 +35,7 @@ object Database {
 
     private fun getBitcoinData(line: String?): Pair<String, String>? {
         var parsedString: Pair<String, String>? = null
-        line?.let { parsedString = Pair(line.lowercase(Locale.getDefault()).trim(), "Unknown")}
+        line?.let { parsedString = Pair(line.trim(), "Unknown")}
         return parsedString
     }
 

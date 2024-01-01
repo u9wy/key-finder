@@ -62,7 +62,7 @@ object Ethereum : Scanner {
 
     override fun getDatabasePath() = Paths.get("database/ethereum")
 
-    override fun getSaveProgressWritePath() = Paths.get("ethereum/GeneratedPageNumbers.txt")
+    override fun getSaveProgressWritePath() = Paths.get("ethereum/ScannedPageRanges.txt")
 
     override fun getSaveFoundWalletsWritePath() = Paths.get("ethereum/FundedPrivateKeys.txt")
 }
