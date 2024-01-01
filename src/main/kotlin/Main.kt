@@ -235,12 +235,12 @@ private fun start(threadMultiplier: Int) {
         if (!mainThreadPool.isShutdown)
             mainThreadPool.submit(Thread {
                 crossCheckAddresses()
-            }).get()
+            })
     }
 }
 
 private fun generateRandomRange() { //todo fix recursive loop issue in small ranges
-
+    println("called generate random range")
     val startingRange = generateRandomBigInteger(config.startPage, config.endPage)
 
     val foundRange = scannedRanges.find { pair -> (startingRange >= pair.first) && startingRange <= pair.second }
