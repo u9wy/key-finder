@@ -7,5 +7,5 @@ data class Config(
     val isAscending : Boolean,
     val startPage : BigInteger,
     val endPage : BigInteger,
-    val randomRangeSize : BigInteger = "100000000".toBigInteger()
+    val randomRangeSize : BigInteger = "1000000".toBigInteger()
 )
