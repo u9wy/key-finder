@@ -11,17 +11,37 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ThreadPoolExecutor
 import kotlin.system.exitProcess
 
-@Volatile private var shutdown = false
-@Volatile private var restart = false
+@Volatile
+private var shutdown = false
+
+@Volatile
+private var restart = false
+
+@Volatile
 private lateinit var scannedRanges: MutableSet<Pair<BigInteger, BigInteger>>
-@Volatile private lateinit var fundedMap: Map<String, String>
-@Volatile private var scannedPages = BigInteger.ZERO
-@Volatile private lateinit var sequentialPageCounter: BigInteger
-@Volatile private lateinit var maxValue: BigInteger
-@Volatile private lateinit var minValue: BigInteger
+
+@Volatile
+private lateinit var fundedMap: Map<String, String>
+
+@Volatile
+private var scannedPages = "-1".toBigInteger()
+
+@Volatile
+private var scannedRangeCounter = BigInteger.ZERO
+
+@Volatile
+private lateinit var sequentialPageCounter: BigInteger
+
+@Volatile
+private lateinit var maxValue: BigInteger
+
+@Volatile
+private lateinit var minValue: BigInteger
 
 private lateinit var config: Config
 private lateinit var scanner: Scanner
+private lateinit var threadController: ThreadController
+private val lock = Any()
 
 fun generateRandomBigInteger(min: BigInteger, max: BigInteger): BigInteger {
 
@@ -63,11 +83,12 @@ private fun paginate(): BigInteger {
 }
 
 private fun crossCheckAddresses() {
-    while (!shutdown) {
+    while (!shutdown && !restart && !Thread.currentThread().isInterrupted) {
+
         val page = paginate()
 
         if ((page > maxValue || page < minValue))
-            stopAndRestart()
+            return
 
         val addressList = scanner.getPrivateKeyPairPage(page)
 
@@ -88,25 +109,25 @@ private fun crossCheckAddresses() {
     }
 }
 
+
 private val consoleThreadPool = Executors.newFixedThreadPool(1)
 private fun clearAndPrint() {
+    fun print() {
+        clearLine(updateText.length)
+        print(updateText)
+    }
     consoleThreadPool.submit(Thread {
         while (!shutdown) {
             if (scannedPages > BigInteger.ZERO) {
-                clearLine(99)
-                printUpdate()
+                print()
                 Thread.sleep(1000)
             }
             Thread.sleep(1000)
         }
-        clearLine(99)
-        printUpdate()
+        print()
     })
 }
 
-private fun printUpdate() {
-    print("Scanned Pages: $scannedPages ")
-}
 
 private fun clearLine(length: Int) {
     for (i in 0..length) {
@@ -139,6 +160,7 @@ fun readStringFromFile(filePath: Path): String {
     return try {
         Files.readString(filePath)
     } catch (ex: NoSuchFileException) {
+        println("Error reading file ${filePath.toFile().path}: {ex.message}")
         ""
     }
 }
@@ -191,16 +213,12 @@ private fun stopAndRestart() {
         shutdown = true
         exitProcess(0)
     } else {
-        if (!restart) {
-            restart = true
-            println("\nScanning New Random Range")
-            scannedRanges.add(Pair(minValue, maxValue))
-            start(config.threadMultiplier)
-        } else Thread.currentThread().interrupt()
+        restart = true
+        scannedRanges.add(Pair(minValue, maxValue))
+        start(config.threadMultiplier)
     }
 }
 
-private lateinit var mainThreadPool: ExecutorService
 private fun start(threadMultiplier: Int) {
 
     if (!::fundedMap.isInitialized) {
@@ -219,8 +237,8 @@ private fun start(threadMultiplier: Int) {
     if (!restart) {
         println("Number of available processor cores: $availableCores")
         println("Spawning $runnableThreads threads")
+        println("Scanning Addresses...")
     }
-    mainThreadPool = Executors.newFixedThreadPool(runnableThreads)
 
     shutdown = false
     restart = false
@@ -228,19 +246,14 @@ private fun start(threadMultiplier: Int) {
     if (!config.isSequential)
         generateRandomRange()
 
-    println("Scanning Addresses...")
 
     clearAndPrint()
     for (i in 0 until runnableThreads) {
-        if (!mainThreadPool.isShutdown)
-            mainThreadPool.submit(Thread {
-                crossCheckAddresses()
-            })
+        threadController.submit { crossCheckAddresses() }
     }
 }
 
 private fun generateRandomRange() { //todo fix recursive loop issue in small ranges
-    println("called generate random range")
     val startingRange = generateRandomBigInteger(config.startPage, config.endPage)
 
     val foundRange = scannedRanges.find { pair -> (startingRange >= pair.first) && startingRange <= pair.second }
@@ -249,7 +262,7 @@ private fun generateRandomRange() { //todo fix recursive loop issue in small ran
         generateRandomRange()
 
 
-    val endingRange = when { //todo should take decending into account double check
+    val endingRange = when {
         (startingRange + config.randomRangeSize) <= config.endPage -> startingRange + config.randomRangeSize
         else -> config.endPage
     }
@@ -257,6 +270,7 @@ private fun generateRandomRange() { //todo fix recursive loop issue in small ran
     minValue = startingRange
     maxValue = endingRange
     sequentialPageCounter = if (config.isAscending) minValue else maxValue
+    scannedRangeCounter += BigInteger.ONE
 }
 
 fun main(args: Array<String>) {
@@ -291,28 +305,43 @@ fun main(args: Array<String>) {
 
     sequentialPageCounter = if (config.isAscending) minValue else maxValue
 
+    threadController = ThreadController(lock).apply {
+        onQueueComplete = { stopAndRestart() }
+        onInterrupted = { tearDown() }
+    }
     start(config.threadMultiplier)
 }
 
-val thread = Thread {
+private val thread = Thread {
     shutdown = true
-    if (::mainThreadPool.isInitialized && (mainThreadPool as ThreadPoolExecutor).poolSize > 0)
-        mainThreadPool.shutdownNow()
+    restart = false
+    threadController.shutdown()
+}
 
-    if (::scannedRanges.isInitialized) {
-        if (config.isAscending)
-            scannedRanges.add(Pair(minValue, sequentialPageCounter))
-        else
-            scannedRanges.add(Pair(maxValue, sequentialPageCounter))
+private fun tearDown() {
+    synchronized(lock) {
+        if (::scannedRanges.isInitialized) {
+            if (config.isAscending)
+                scannedRanges.add(Pair(minValue, sequentialPageCounter))
+            else
+                scannedRanges.add(Pair(maxValue, sequentialPageCounter))
 
-        writeToFile(
-            scanner.getSaveProgressWritePath(),
-            setToString(scannedRanges),
-            overwrite = true,
-            spawnThread = false
-        )
+            writeToFile(
+                scanner.getSaveProgressWritePath(),
+                setToString(scannedRanges),
+                overwrite = true,
+                spawnThread = false
+            )
+        }
     }
 }
+
+private val updateText
+    get() =
+        if (config.isSequential)
+            "Scanned Pages: $scannedPages"
+        else
+            "Scanned Pages: $scannedPages - Scanned Ranges $scannedRangeCounter"
 
 /**
  * TODO add stop code to random mode
