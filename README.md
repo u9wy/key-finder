@@ -38,8 +38,9 @@ java -jar key-finder.jar <scannerType> <threadMultiplier> <isSequential> <ascend
 - `<threadMultiplier>`: Set the thread multiplier for concurrent scanning.
 - `<isSequential>`: Set to "true" for sequential scanning, "false" for random scanning.
 - `<ascending>`: Set to "true" for ascending scanning, "false" for descending scanning. Redundant when isSequential = false
-- `<startPage>`: Set the starting page for scanning (BigInteger).
-- `<endPage>`: Set the ending page for scanning (BigInteger).
+- `<startPage>`: Set the starting page for scanning.
+- `<endPage>`: Set the ending page for scanning.
+- `<randomRangeSize>`: Set the size of each random range generated. Default value is 1000000
 
 ## Example
 
