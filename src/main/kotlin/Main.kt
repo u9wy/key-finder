@@ -24,7 +24,7 @@ private lateinit var scannedRanges: MutableSet<Pair<BigInteger, BigInteger>>
 private lateinit var fundedMap: Map<String, String>
 
 @Volatile
-private var scannedPages = "-1".toBigInteger()
+private var scannedPages = BigInteger.ZERO
 
 @Volatile
 private var scannedRangeCounter = BigInteger.ZERO
@@ -101,7 +101,7 @@ private fun crossCheckAddresses() {
                             "Wallet Private Key: ${privateKey}\n" +
                             "-----\n".trim()
 
-                writeToFile(scanner.getSaveFoundWalletsWritePath(), resultString, false)
+                writeToFile(scanner.getSaveFoundWalletsWritePath(), resultString, false,false)
                 println(resultString)
             }
         }
@@ -110,8 +110,9 @@ private fun crossCheckAddresses() {
 }
 
 
-private val consoleThreadPool = Executors.newFixedThreadPool(1)
+private lateinit var consoleThreadPool : ExecutorService
 private fun clearAndPrint() {
+    consoleThreadPool = Executors.newFixedThreadPool(1)
     fun print() {
         clearLine(updateText.length)
         print(updateText)
@@ -160,7 +161,6 @@ fun readStringFromFile(filePath: Path): String {
     return try {
         Files.readString(filePath)
     } catch (ex: NoSuchFileException) {
-        println("Error reading file ${filePath.toFile().path}: {ex.message}")
         ""
     }
 }
@@ -209,10 +209,11 @@ fun writeToFile(filePath: Path, content: String, overwrite: Boolean, spawnThread
 
 private fun stopAndRestart() {
     if (config.isSequential) {
+        consoleThreadPool.shutdownNow()
         println("Scan Complete")
         shutdown = true
-        exitProcess(0)
     } else {
+        consoleThreadPool.shutdownNow()
         restart = true
         scannedRanges.add(Pair(minValue, maxValue))
         start(config.threadMultiplier)
@@ -300,8 +301,8 @@ fun main(args: Array<String>) {
     )
     config = config.copy(randomRangeSize = args.getOrNull(6)?.toBigInteger() ?: config.randomRangeSize)
 
-    maxValue = config.startPage
-    minValue = config.endPage
+    minValue = config.startPage
+    maxValue = config.endPage
 
     sequentialPageCounter = if (config.isAscending) minValue else maxValue
 
@@ -321,7 +322,10 @@ private val thread = Thread {
 private fun tearDown() {
     synchronized(lock) {
         if (::scannedRanges.isInitialized) {
-            scannedRanges.add(Pair(maxValue, maxValue + sequentialPageCounter))
+            if(config.isAscending)
+                scannedRanges.add(Pair(minValue,minValue + sequentialPageCounter))
+            else
+                scannedRanges.add(Pair(minValue, maxValue - sequentialPageCounter))
 
             writeToFile(
                 scanner.getSaveProgressWritePath(),

@@ -46,7 +46,7 @@ object Bitcoin : Scanner {
             keyPairList [address] = wif
 
 //        println("${privateKey.privKey}\t${privateKey.privateKeyAsHex}\t$address")
-//
+
 //        println("Index: $i")
 //        println("Private Key Decimal: ${privateKey.privKey}")
 //        println("Private Key Hex: ${privateKey.privateKeyAsHex}")
