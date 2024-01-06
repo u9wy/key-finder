@@ -322,10 +322,7 @@ private val thread = Thread {
 private fun tearDown() {
     synchronized(lock) {
         if (::scannedRanges.isInitialized) {
-            if(config.isAscending)
-                scannedRanges.add(Pair(minValue,minValue + sequentialPageCounter))
-            else
-                scannedRanges.add(Pair(minValue, maxValue - sequentialPageCounter))
+                scannedRanges.add(Pair(minValue, sequentialPageCounter))
 
             writeToFile(
                 scanner.getSaveProgressWritePath(),
