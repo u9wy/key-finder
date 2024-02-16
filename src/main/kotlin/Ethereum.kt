@@ -31,6 +31,11 @@ object Ethereum : Scanner {
     private fun getFirstAddressLocationFromPage(page: BigInteger) =
         page.multiply(BigInteger("100")).subtract("99".toBigInteger())
 
+    override fun getPublicPrivateKey(index: BigInteger): Pair<String, String> {
+        val privateKey = generatePrivateKey(index)
+        val publicKey = privateToAddress(privateKey)
+        return Pair(publicKey,privateKey)
+    }
     override fun getPrivateKeyPairPage(page: BigInteger): Map<String,String> {
 
         val pageLocation = getFirstAddressLocationFromPage(page)

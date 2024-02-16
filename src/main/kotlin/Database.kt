@@ -39,19 +39,19 @@ object Database {
         return parsedString
     }
 
-    private fun getParserMethod(type: Type) =
+    private fun getParserMethod(type: ScannerType) =
         when (type) {
-            Type.ETH -> {
+            ScannerType.ETH -> {
                 val block: (line: String?) -> Pair<String, String>? = { line -> getEthereumData(line) }; block
             }
 
-            Type.BTC -> {
+            ScannerType.BTC -> {
                 val block: (line: String?) -> Pair<String, String>? = { line -> getBitcoinData(line) }; block
             }
         }
 
 
-    fun getData(type: Type, path: Path): Map<String, String> {
+    fun getData(type: ScannerType, path: Path): Map<String, String> {
         val data = mutableMapOf<String, String>()
         if (Files.exists(path)) {
             path.toFile().listFiles()
@@ -70,6 +70,6 @@ object Database {
 }
 
 fun main() {
-    Database.getData(Type.ETH, Paths.get("database/ethereum"))
-    Database.getData(Type.BTC, Paths.get("database/bitcoin"))
+    Database.getData(ScannerType.ETH, Paths.get("database/ethereum"))
+    Database.getData(ScannerType.BTC, Paths.get("database/bitcoin"))
 }

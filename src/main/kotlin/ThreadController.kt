@@ -1,28 +1,30 @@
 class ThreadController(private val lock: Any) {
 
-    private val queue = mutableMapOf<Int, Thread>()
-    lateinit var onQueueComplete : () -> Unit
-    lateinit var onInterrupted : () -> Unit
+    val queue = mutableMapOf<Int, Thread>()
+    lateinit var onQueueComplete: () -> Unit
+    lateinit var onInterrupted: () -> Unit
 
-    fun submit(block: () -> Unit) {
+    fun submit(block: () -> Unit): Long {
         val key = queue.size + 1
 
         val thread = Thread {
             block.invoke()
             synchronized(lock) {
                 queue.remove(key)
-                if (queue.isEmpty()) onQueueComplete.invoke()
+                if (queue.isEmpty()) { onQueueComplete.invoke() }
             }
         }
 
         queue[key] = thread
+        thread.isDaemon = false
         thread.start()
+        return thread.id
     }
 
     fun shutdown() {
         synchronized(lock) {
             queue.forEach { keyPair ->
-                with(keyPair.value){
+                with(keyPair.value) {
                     interrupt()
                     join(1000)
                 }
